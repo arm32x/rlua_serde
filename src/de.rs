@@ -1,7 +1,7 @@
 use serde;
 use serde::de::IntoDeserializer;
 
-use rlua::{Value, TablePairs, TableSequence};
+use rlua::{TablePairs, TableSequence, Value};
 
 use error::{Error, Result};
 
@@ -31,7 +31,8 @@ impl<'lua, 'de> serde::Deserializer<'de> for Deserializer<'lua> {
 
     #[inline]
     fn deserialize_any<V>(self, visitor: V) -> Result<V::Value>
-        where V: serde::de::Visitor<'de>
+    where
+        V: serde::de::Visitor<'de>,
     {
         match self.value {
             Value::Nil => visitor.visit_unit(),
@@ -48,7 +49,10 @@ impl<'lua, 'de> serde::Deserializer<'de> for Deserializer<'lua> {
                     if remaining == 0 {
                         Ok(map)
                     } else {
-                        Err(serde::de::Error::invalid_length(len, &"fewer elements in array"))
+                        Err(serde::de::Error::invalid_length(
+                            len,
+                            &"fewer elements in array",
+                        ))
                     }
                 } else {
                     let mut deserializer = SeqDeserializer(v.sequence_values());
@@ -57,17 +61,21 @@ impl<'lua, 'de> serde::Deserializer<'de> for Deserializer<'lua> {
                     if remaining == 0 {
                         Ok(seq)
                     } else {
-                        Err(serde::de::Error::invalid_length(len, &"fewer elements in array"))
+                        Err(serde::de::Error::invalid_length(
+                            len,
+                            &"fewer elements in array",
+                        ))
                     }
                 }
-            },
+            }
             _ => Err(serde::de::Error::custom("invalid value type")),
         }
     }
 
     #[inline]
     fn deserialize_option<V>(self, visitor: V) -> Result<V::Value>
-        where V: serde::de::Visitor<'de>
+    where
+        V: serde::de::Visitor<'de>,
     {
         match self.value {
             Value::Nil => visitor.visit_none(),
@@ -77,26 +85,32 @@ impl<'lua, 'de> serde::Deserializer<'de> for Deserializer<'lua> {
 
     #[inline]
     fn deserialize_enum<V>(
-        self, _name: &str, _variants: &'static [&'static str], visitor: V
+        self,
+        _name: &str,
+        _variants: &'static [&'static str],
+        visitor: V,
     ) -> Result<V::Value>
-        where V: serde::de::Visitor<'de>
+    where
+        V: serde::de::Visitor<'de>,
     {
         let (variant, value) = match self.value {
             Value::Table(value) => {
                 let mut iter = value.pairs::<String, Value>();
                 let (variant, value) = match iter.next() {
                     Some(v) => v?,
-                    None => return Err(serde::de::Error::invalid_value(
-                        serde::de::Unexpected::Map,
-                        &"map with a single key",
-                    )),
+                    None => {
+                        return Err(serde::de::Error::invalid_value(
+                            serde::de::Unexpected::Map,
+                            &"map with a single key",
+                        ))
+                    }
                 };
 
                 if iter.next().is_some() {
                     return Err(serde::de::Error::invalid_value(
                         serde::de::Unexpected::Map,
                         &"map with a single key",
-                    ))
+                    ));
                 }
                 (variant, Some(value))
             }
@@ -109,7 +123,8 @@ impl<'lua, 'de> serde::Deserializer<'de> for Deserializer<'lua> {
 
     #[inline]
     fn deserialize_seq<V>(self, visitor: V) -> Result<V::Value>
-        where V: serde::de::Visitor<'de>
+    where
+        V: serde::de::Visitor<'de>,
     {
         match self.value {
             Value::Table(v) => {
@@ -120,7 +135,10 @@ impl<'lua, 'de> serde::Deserializer<'de> for Deserializer<'lua> {
                 if remaining == 0 {
                     Ok(seq)
                 } else {
-                    Err(serde::de::Error::invalid_length(len, &"fewer elements in array"))
+                    Err(serde::de::Error::invalid_length(
+                        len,
+                        &"fewer elements in array",
+                    ))
                 }
             }
             _ => Err(serde::de::Error::custom("invalid value type")),
@@ -129,14 +147,21 @@ impl<'lua, 'de> serde::Deserializer<'de> for Deserializer<'lua> {
 
     #[inline]
     fn deserialize_tuple<V>(self, _len: usize, visitor: V) -> Result<V::Value>
-        where V: serde::de::Visitor<'de>
+    where
+        V: serde::de::Visitor<'de>,
     {
         self.deserialize_seq(visitor)
     }
 
     #[inline]
-    fn deserialize_tuple_struct<V>(self, _name: &'static str, _len: usize, visitor: V) -> Result<V::Value>
-        where V: serde::de::Visitor<'de>
+    fn deserialize_tuple_struct<V>(
+        self,
+        _name: &'static str,
+        _len: usize,
+        visitor: V,
+    ) -> Result<V::Value>
+    where
+        V: serde::de::Visitor<'de>,
     {
         self.deserialize_seq(visitor)
     }
@@ -148,19 +173,18 @@ impl<'lua, 'de> serde::Deserializer<'de> for Deserializer<'lua> {
     }
 }
 
-
 struct SeqDeserializer<'lua>(TableSequence<'lua, Value<'lua>>);
 
 impl<'lua, 'de> serde::de::SeqAccess<'de> for SeqDeserializer<'lua> {
     type Error = Error;
 
     fn next_element_seed<T>(&mut self, seed: T) -> Result<Option<T::Value>>
-        where T: serde::de::DeserializeSeed<'de>
+    where
+        T: serde::de::DeserializeSeed<'de>,
     {
         match self.0.next() {
-            Some(value) => seed.deserialize(Deserializer { value: value? })
-                               .map(Some),
-            None => Ok(None)
+            Some(value) => seed.deserialize(Deserializer { value: value? }).map(Some),
+            None => Ok(None),
         }
     }
 
@@ -172,17 +196,17 @@ impl<'lua, 'de> serde::de::SeqAccess<'de> for SeqDeserializer<'lua> {
     }
 }
 
-
 struct MapDeserializer<'lua>(
     TablePairs<'lua, Value<'lua>, Value<'lua>>,
-    Option<Value<'lua>>
+    Option<Value<'lua>>,
 );
 
 impl<'lua, 'de> serde::de::MapAccess<'de> for MapDeserializer<'lua> {
     type Error = Error;
 
     fn next_key_seed<T>(&mut self, seed: T) -> Result<Option<T::Value>>
-        where T: serde::de::DeserializeSeed<'de>
+    where
+        T: serde::de::DeserializeSeed<'de>,
     {
         match self.0.next() {
             Some(item) => {
@@ -190,13 +214,14 @@ impl<'lua, 'de> serde::de::MapAccess<'de> for MapDeserializer<'lua> {
                 self.1 = Some(value);
                 let key_de = Deserializer { value: key };
                 seed.deserialize(key_de).map(Some)
-            },
+            }
             None => Ok(None),
         }
     }
 
     fn next_value_seed<T>(&mut self, seed: T) -> Result<T::Value>
-        where T: serde::de::DeserializeSeed<'de>
+    where
+        T: serde::de::DeserializeSeed<'de>,
     {
         match self.1.take() {
             Some(value) => seed.deserialize(Deserializer { value }),
@@ -212,7 +237,6 @@ impl<'lua, 'de> serde::de::MapAccess<'de> for MapDeserializer<'lua> {
     }
 }
 
-
 struct EnumDeserializer<'lua> {
     variant: String,
     value: Option<Value<'lua>>,
@@ -223,14 +247,14 @@ impl<'lua, 'de> serde::de::EnumAccess<'de> for EnumDeserializer<'lua> {
     type Variant = VariantDeserializer<'lua>;
 
     fn variant_seed<T>(self, seed: T) -> Result<(T::Value, Self::Variant)>
-        where T: serde::de::DeserializeSeed<'de>
+    where
+        T: serde::de::DeserializeSeed<'de>,
     {
         let variant = self.variant.into_deserializer();
         let variant_access = VariantDeserializer { value: self.value };
         seed.deserialize(variant).map(|v| (v, variant_access))
     }
 }
-
 
 struct VariantDeserializer<'lua> {
     value: Option<Value<'lua>>,
@@ -245,49 +269,46 @@ impl<'lua, 'de> serde::de::VariantAccess<'de> for VariantDeserializer<'lua> {
                 serde::de::Unexpected::NewtypeVariant,
                 &"unit variant",
             )),
-            None => Ok(())
+            None => Ok(()),
         }
     }
 
     fn newtype_variant_seed<T>(self, seed: T) -> Result<T::Value>
-        where T: serde::de::DeserializeSeed<'de>
+    where
+        T: serde::de::DeserializeSeed<'de>,
     {
         match self.value {
             Some(value) => seed.deserialize(Deserializer { value }),
             None => Err(serde::de::Error::invalid_type(
                 serde::de::Unexpected::UnitVariant,
                 &"newtype variant",
-            ))
+            )),
         }
     }
 
     fn tuple_variant<V>(self, _len: usize, visitor: V) -> Result<V::Value>
-        where V: serde::de::Visitor<'de>
+    where
+        V: serde::de::Visitor<'de>,
     {
         match self.value {
-            Some(value) => serde::Deserializer::deserialize_seq(
-                Deserializer { value }, visitor
-            ),
+            Some(value) => serde::Deserializer::deserialize_seq(Deserializer { value }, visitor),
             None => Err(serde::de::Error::invalid_type(
                 serde::de::Unexpected::UnitVariant,
                 &"tuple variant",
-            ))
+            )),
         }
     }
 
-    fn struct_variant<V>(
-        self, _fields: &'static [&'static str], visitor: V
-    ) -> Result<V::Value>
-        where V: serde::de::Visitor<'de>
+    fn struct_variant<V>(self, _fields: &'static [&'static str], visitor: V) -> Result<V::Value>
+    where
+        V: serde::de::Visitor<'de>,
     {
         match self.value {
-            Some(value) => serde::Deserializer::deserialize_map(
-                Deserializer { value }, visitor
-            ),
+            Some(value) => serde::Deserializer::deserialize_map(Deserializer { value }, visitor),
             None => Err(serde::de::Error::invalid_type(
                 serde::de::Unexpected::UnitVariant,
                 &"struct variant",
-            ))
+            )),
         }
     }
 }
@@ -312,20 +333,25 @@ mod tests {
             int: 1,
             seq: vec!["a".to_owned(), "b".to_owned()],
             map: vec![(1, 2), (4, 1)].into_iter().collect(),
-            empty: vec![]
+            empty: vec![],
         };
 
         println!("{:?}", expected);
         let lua = Lua::new();
         lua.context(|lua| {
-            let value = lua.load(r#"
+            let value = lua
+                .load(
+                    r#"
                 a = {}
                 a.int = 1
                 a.seq = {"a", "b"}
                 a.map = {2, [4]=1}
                 a.empty = {}
                 return a
-            "#).eval().unwrap();
+            "#,
+                )
+                .eval()
+                .unwrap();
             let got = from_value(value).unwrap();
             assert_eq!(expected, got);
         });
@@ -339,20 +365,28 @@ mod tests {
         let lua = Lua::new();
         lua.context(|lua| {
             let expected = Rgb(1, 2, 3);
-            let value = lua.load(
-                r#"
+            let value = lua
+                .load(
+                    r#"
                 a = {1, 2, 3}
                 return a
-            "#).eval().unwrap();
+            "#,
+                )
+                .eval()
+                .unwrap();
             let got = from_value(value).unwrap();
             assert_eq!(expected, got);
 
             let expected = (1, 2, 3);
-            let value = lua.load(
-                r#"
+            let value = lua
+                .load(
+                    r#"
                 a = {1, 2, 3}
                 return a
-            "#).eval().unwrap();
+            "#,
+                )
+                .eval()
+                .unwrap();
             let got = from_value(value).unwrap();
             assert_eq!(expected, got);
         });
@@ -371,42 +405,57 @@ mod tests {
         let lua = Lua::new();
         lua.context(|lua| {
             let expected = E::Unit;
-            let value = lua.load(
-                r#"
+            let value = lua
+                .load(
+                    r#"
                 return "Unit"
-            "#).eval().unwrap();
+            "#,
+                )
+                .eval()
+                .unwrap();
             let got = from_value(value).unwrap();
             assert_eq!(expected, got);
 
-
             let expected = E::Newtype(1);
-            let value = lua.load(
-                r#"
+            let value = lua
+                .load(
+                    r#"
                 a = {}
                 a["Newtype"] = 1
                 return a
-            "#).eval().unwrap();
+            "#,
+                )
+                .eval()
+                .unwrap();
             let got = from_value(value).unwrap();
             assert_eq!(expected, got);
 
             let expected = E::Tuple(1, 2);
-            let value = lua.load(
-                r#"
+            let value = lua
+                .load(
+                    r#"
                 a = {}
                 a["Tuple"] = {1, 2}
                 return a
-            "#).eval().unwrap();
+            "#,
+                )
+                .eval()
+                .unwrap();
             let got = from_value(value).unwrap();
             assert_eq!(expected, got);
 
             let expected = E::Struct { a: 1 };
-            let value = lua.load(
-                r#"
+            let value = lua
+                .load(
+                    r#"
                 a = {}
                 a["Struct"] = {}
                 a["Struct"]["a"] = 1
                 return a
-            "#).eval().unwrap();
+            "#,
+                )
+                .eval()
+                .unwrap();
             let got = from_value(value).unwrap();
             assert_eq!(expected, got);
         });
@@ -418,33 +467,45 @@ mod tests {
         let lua = Lua::new();
         lua.context(|lua| {
             let expected = String::from("[1,2,4,8]");
-            let value = lua.load(
-                r#"
+            let value = lua
+                .load(
+                    r#"
                 a = {1,2,4,8}
                 setmetatable(a, {__array = true})
                 return a
-            "#).eval().unwrap();
+            "#,
+                )
+                .eval()
+                .unwrap();
             let json: serde_json::Value = from_value(value).unwrap();
             let got = serde_json::to_string(&json).unwrap();
             assert_eq!(expected, got);
-            
+
             let expected = String::from("[]");
-            let value = lua.load(
-            r#"
+            let value = lua
+                .load(
+                    r#"
             a = {}
             setmetatable(a, {__array = true})
             return a
-            "#).eval().unwrap();
+            "#,
+                )
+                .eval()
+                .unwrap();
             let json: serde_json::Value = from_value(value).unwrap();
-            let got = serde_json::to_string(&json).unwrap();  
+            let got = serde_json::to_string(&json).unwrap();
             assert_eq!(expected, got);
 
             let expected = String::from("{}");
-            let value = lua.load(
-                r#"
+            let value = lua
+                .load(
+                    r#"
                 a = {}
                 return a
-                "#).eval().unwrap();
+                "#,
+                )
+                .eval()
+                .unwrap();
             let json: serde_json::Value = from_value(value).unwrap();
             let got = serde_json::to_string(&json).unwrap();
             assert_eq!(expected, got);
