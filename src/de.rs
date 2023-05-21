@@ -166,9 +166,26 @@ impl<'lua, 'de> serde::Deserializer<'de> for Deserializer<'lua> {
         self.deserialize_seq(visitor)
     }
 
+    fn deserialize_bytes<V>(self, visitor: V) -> Result<V::Value>
+    where
+        V: serde::de::Visitor<'de>,
+    {
+        match self.value {
+            Value::String(s) => visitor.visit_bytes(s.as_bytes()),
+            _ => Err(serde::de::Error::custom("invalid value type")),
+        }
+    }
+
+    fn deserialize_byte_buf<V>(self, visitor: V) -> Result<V::Value>
+    where
+        V: serde::de::Visitor<'de>,
+    {
+        self.deserialize_bytes(visitor)
+    }
+
     forward_to_deserialize_any! {
-        bool i8 i16 i32 i64 u8 u16 u32 u64 f32 f64 char str string bytes
-        byte_buf unit unit_struct newtype_struct
+        bool i8 i16 i32 i64 u8 u16 u32 u64 f32 f64 char str string
+        unit unit_struct newtype_struct
         map struct identifier ignored_any
     }
 }
@@ -508,6 +525,34 @@ mod tests {
                 .unwrap();
             let json: serde_json::Value = from_value(value).unwrap();
             let got = serde_json::to_string(&json).unwrap();
+            assert_eq!(expected, got);
+        });
+    }
+
+    #[test]
+    fn test_binary() {
+        #[derive(Deserialize, PartialEq, Debug)]
+        struct S {
+            #[serde(with = "serde_bytes")]
+            binary: Vec<u8>,
+        }
+
+        let lua = Lua::new();
+        lua.context(|lua| {
+            let expected = S {
+                binary: vec![0x11, 0x22, 0xee, 0xff],
+            };
+            let value = lua
+                .load(
+                    r#"
+                    return {
+                        binary = "\x11\x22\xee\xff"
+                    }
+                    "#,
+                )
+                .eval()
+                .unwrap();
+            let got = from_value(value).unwrap();
             assert_eq!(expected, got);
         });
     }
