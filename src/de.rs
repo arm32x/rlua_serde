@@ -342,13 +342,13 @@ mod tests {
             let value = lua
                 .load(
                     r#"
-                a = {}
-                a.int = 1
-                a.seq = {"a", "b"}
-                a.map = {2, [4]=1}
-                a.empty = {}
-                return a
-            "#,
+                    a = {}
+                    a.int = 1
+                    a.seq = {"a", "b"}
+                    a.map = {2, [4]=1}
+                    a.empty = {}
+                    return a
+                    "#,
                 )
                 .eval()
                 .unwrap();
@@ -368,9 +368,9 @@ mod tests {
             let value = lua
                 .load(
                     r#"
-                a = {1, 2, 3}
-                return a
-            "#,
+                    a = {1, 2, 3}
+                    return a
+                    "#,
                 )
                 .eval()
                 .unwrap();
@@ -381,9 +381,9 @@ mod tests {
             let value = lua
                 .load(
                     r#"
-                a = {1, 2, 3}
-                return a
-            "#,
+                    a = {1, 2, 3}
+                    return a
+                    "#,
                 )
                 .eval()
                 .unwrap();
@@ -408,8 +408,8 @@ mod tests {
             let value = lua
                 .load(
                     r#"
-                return "Unit"
-            "#,
+                    return "Unit"
+                    "#,
                 )
                 .eval()
                 .unwrap();
@@ -420,10 +420,10 @@ mod tests {
             let value = lua
                 .load(
                     r#"
-                a = {}
-                a["Newtype"] = 1
-                return a
-            "#,
+                    a = {}
+                    a["Newtype"] = 1
+                    return a
+                    "#,
                 )
                 .eval()
                 .unwrap();
@@ -434,10 +434,10 @@ mod tests {
             let value = lua
                 .load(
                     r#"
-                a = {}
-                a["Tuple"] = {1, 2}
-                return a
-            "#,
+                    a = {}
+                    a["Tuple"] = {1, 2}
+                    return a
+                    "#,
                 )
                 .eval()
                 .unwrap();
@@ -448,11 +448,11 @@ mod tests {
             let value = lua
                 .load(
                     r#"
-                a = {}
-                a["Struct"] = {}
-                a["Struct"]["a"] = 1
-                return a
-            "#,
+                    a = {}
+                    a["Struct"] = {}
+                    a["Struct"]["a"] = 1
+                    return a
+                    "#,
                 )
                 .eval()
                 .unwrap();
@@ -470,10 +470,10 @@ mod tests {
             let value = lua
                 .load(
                     r#"
-                a = {1,2,4,8}
-                setmetatable(a, {__array = true})
-                return a
-            "#,
+                    a = {1,2,4,8}
+                    setmetatable(a, {__array = true})
+                    return a
+                    "#,
                 )
                 .eval()
                 .unwrap();
@@ -485,10 +485,10 @@ mod tests {
             let value = lua
                 .load(
                     r#"
-            a = {}
-            setmetatable(a, {__array = true})
-            return a
-            "#,
+                    a = {}
+                    setmetatable(a, {__array = true})
+                    return a
+                    "#,
                 )
                 .eval()
                 .unwrap();
@@ -500,9 +500,9 @@ mod tests {
             let value = lua
                 .load(
                     r#"
-                a = {}
-                return a
-                "#,
+                    a = {}
+                    return a
+                    "#,
                 )
                 .eval()
                 .unwrap();

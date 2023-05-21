@@ -408,7 +408,7 @@ mod tests {
                 assert(value["int"] == 1)
                 assert(value["seq"][1] == "a")
                 assert(value["seq"][2] == "b")
-            "#,
+                "#,
             )
             .exec()
         })
@@ -434,7 +434,7 @@ mod tests {
             lua.load(
                 r#"
                 assert(value == "Unit")
-            "#,
+                "#,
             )
             .exec()
             .unwrap();
@@ -445,7 +445,7 @@ mod tests {
             lua.load(
                 r#"
                 assert(value["Newtype"] == 1)
-            "#,
+                "#,
             )
             .exec()
             .unwrap();
@@ -457,7 +457,7 @@ mod tests {
                 r#"
                 assert(value["Tuple"][1] == 1)
                 assert(value["Tuple"][2] == 2)
-            "#,
+                "#,
             )
             .exec()
             .unwrap();
@@ -468,7 +468,7 @@ mod tests {
             lua.load(
                 r#"
                 assert(value["Struct"]["a"] == 1)
-            "#,
+                "#,
             )
             .exec()
         })
